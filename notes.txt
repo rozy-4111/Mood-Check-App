@@ -1,0 +1,144 @@
+// Project: Mood Check-In
+// Framework: React
+// Styling: Tailwind CSS
+// Animations: Framer Motion
+// API: JSONPlaceholder mock API
+
+// STEP 1: Create a new React project (use terminal)
+// npx create-react-app mood-checkin
+// cd mood-checkin
+// npm install tailwindcss framer-motion axios
+// npx tailwindcss init -p
+
+// STEP 2: Configure Tailwind CSS in tailwind.config.js
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+
+// STEP 3: Add Tailwind directives to ./src/index.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// STEP 4: src/App.js
+import React, { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import axios from 'axios';
+import './App.css';
+
+const emotions = [
+  { name: 'Happy', emoji: '😊' },
+  { name: 'Sad', emoji: '😢' },
+  { name: 'Angry', emoji: '😠' },
+  { name: 'Excited', emoji: '🤩' },
+  { name: 'Calm', emoji: '😌' },
+  { name: 'Tired', emoji: '😴' }
+];
+
+function App() {
+  const [selectedEmotion, setSelectedEmotion] = useState(null);
+  const [notes, setNotes] = useState('');
+  const [status, setStatus] = useState('idle');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async () => {
+    if (!selectedEmotion || notes.length > 500) return;
+
+    setStatus('loading');
+    try {
+      await axios.post('https://jsonplaceholder.typicode.com/posts', {
+        emotion: selectedEmotion,
+        notes,
+        timestamp: new Date().toISOString()
+      });
+      setStatus('success');
+      setSelectedEmotion(null);
+      setNotes('');
+    } catch (e) {
+      setStatus('error');
+      setError('Failed to submit. Try again.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-blue-50 flex items-center justify-center p-4">
+      <div className="bg-white shadow-xl p-6 rounded-2xl w-full max-w-lg">
+        <h1 className="text-2xl font-bold text-center mb-4">How are you feeling today?</h1>
+
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          {emotions.map((emotion) => (
+            <motion.button
+              key={emotion.name}
+              onClick={() => setSelectedEmotion(emotion.name)}
+              className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-300 ${
+                selectedEmotion === emotion.name ? 'border-blue-500 bg-blue-100' : 'border-gray-200'
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span className="text-3xl">{emotion.emoji}</span>
+              <span className="mt-1 text-sm">{emotion.name}</span>
+            </motion.button>
+          ))}
+        </div>
+
+        <textarea
+          className="w-full border border-gray-300 rounded-lg p-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          rows="4"
+          maxLength="500"
+          placeholder="Add a note (optional)..."
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
+        <div className="text-right text-sm text-gray-500 mb-4">{notes.length}/500</div>
+
+        <motion.button
+          className="w-full bg-blue-600 text-white py-2 rounded-lg disabled:opacity-50"
+          disabled={!selectedEmotion || notes.length > 500 || status === 'loading'}
+          onClick={handleSubmit}
+          whileTap={{ scale: 0.97 }}
+        >
+          {status === 'loading' ? 'Submitting...' : 'Submit Check-In'}
+        </motion.button>
+
+        <AnimatePresence>
+          {status === 'success' && (
+            <motion.div
+              className="mt-4 text-green-600 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              Check-in submitted!
+            </motion.div>
+          )}
+          {status === 'error' && (
+            <motion.div
+              className="mt-4 text-red-600 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+// STEP 5: Deploy on Vercel
+// - Push your project to GitHub
+// - Go to https://vercel.com
+// - Import project from GitHub
+// - Deploy and get your live link
+
+// STEP 6: Create README.md with project info, install guide, demo link, and brief write-up
